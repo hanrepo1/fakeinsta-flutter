@@ -1,0 +1,2 @@
+C:/Users/hanre/Documents/FLUTTERworkspace/insta_flutter/android/app/.cxx/Debug/s5p2c1s2/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/hanre/Documents/FLUTTERworkspace/insta_flutter/android/app/.cxx/Debug/s5p2c1s2/arm64-v8a/CMakeFiles/rebuild_cache.dir
