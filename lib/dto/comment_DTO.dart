@@ -1,9 +1,6 @@
-import '../model/post_model.dart';
-import '../model/user_model.dart';
-
 class CommentDTO {
-  User userId;
-  Post postId;
+  int userId;
+  int postId;
   String comment;
 
   CommentDTO({

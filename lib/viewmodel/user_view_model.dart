@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 import '../dto/register_DTO.dart';
@@ -56,13 +58,18 @@ class UserViewModel with ChangeNotifier {
 
   Future<User?> getUserById(int id) async {
     _isLoading = true;
-    
-    User? newUser = await _userService.getUserById(id);
-    
-    _isLoading = false;
     notifyListeners();
 
-    return newUser;
+    try {
+      User? newUser  = await _userService.getUserById(id);
+      return newUser;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteUser (int id) async {

@@ -9,6 +9,7 @@ import 'package:insta_flutter/viewmodel/post_view_model.dart';
 import '../component/post_card.dart';
 import '../constants/shared_pref.dart';
 import '../model/user_model.dart';
+import '../services/http_service.dart';
 import '../viewmodel/story_view_model.dart';
 import '../viewmodel/user_view_model.dart';
 
@@ -29,15 +30,20 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    isLoading = true;
     _loadUserPref();
     _fetchData();
   }
 
   Future<void> _loadUserPref() async {
-    String? existUser  = await SharedPref.getUserPref();
-    if (existUser  != null && existUser .isNotEmpty) {
+    String? existUser = await SharedPref.getUserPref();
+    String? token = await SharedPref.getAccessToken();
+    if (token != null) {
+      HTTPService().setup(bearerToken: token);
+    }
+    if (existUser != null && existUser .isNotEmpty) {
       setState(() {
-        user = User.fromJson(jsonDecode(existUser ));
+        user = User.fromJson(jsonDecode(existUser));
       });
     }
   }
@@ -65,6 +71,7 @@ class _HomePageState extends State<HomePage> {
         selectedPostIndex = index;
       }
     });
+    log(isCommentVisible.toString());
   }
 
   @override
@@ -128,7 +135,7 @@ class _HomePageState extends State<HomePage> {
                     ),
             ),
             if (postViewModel.posts.isEmpty)
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Center(child: Text('No posts available.')),
               )
             else

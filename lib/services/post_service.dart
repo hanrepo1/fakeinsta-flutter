@@ -3,7 +3,9 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:insta_flutter/dto/comment_DTO.dart';
 import 'package:insta_flutter/dto/post_DTO.dart';
+import 'package:insta_flutter/model/comment_model.dart';
 import 'package:insta_flutter/model/post_model.dart';
 
 import 'http_service.dart';
@@ -35,11 +37,6 @@ class PostService {
         "likeCount": postDTO.likeCount,
         "commentCount": postDTO.commentCount,
       };
-      log("userId: "+postDTO.userId.toString());
-      log("imageUrl: "+imageUrl);
-      log("caption: "+postDTO.caption);
-      log("likeCount: "+postDTO.likeCount.toString());
-      log("commentCount: "+postDTO.commentCount.toString());
 
       var response = await _httpService.post("/posts/createPost", queryParameters: body);
       log(response.toString());
@@ -110,9 +107,54 @@ class PostService {
     return null;
   }
 
-  Future<String?> updatePost(int id) async {
+  Future<String?> createComment(CommentDTO commentDTO) async {
     try {
-      var response = await _httpService.put("/posts/updatePost/$id", {});
+      final body = {
+        "userId": commentDTO.userId, 
+        "postId": commentDTO.postId, 
+        "comment": commentDTO.comment,
+      };
+
+      var response = await _httpService.post("/comments/createComment", queryParameters: body);
+      log(response.toString());
+      if (response?.status == 201 && response?.content != null) {
+        return null;
+      } else {
+        return response?.content ??
+            "${response?.status} - Please try again later.";
+      }
+    } catch (e) {
+      log(e.toString());
+      return e.toString();
+    }
+  }
+
+  Future<List<Comment>?> getAllCommentsById(int id) async {
+    try {
+      var response = await _httpService.get("/comments/getAllCommentsById/$id");
+      if (response?.status == 200 && response?.content != null) {
+        List content = response!.content;
+        List<Comment> listComment = content.map((e) => Comment.fromJson(e)).toList();
+        return listComment;
+      }
+    } catch (e) {
+      log(e.toString());
+    }
+
+    return null;
+  }
+
+  Future<String?> updatePost(int id, PostDTO postDTO) async {
+    try {
+      final body = {
+        "userId": postDTO.userId, 
+        "imageUrl": postDTO.imageUrl, 
+        "caption": postDTO.caption,
+        "likeCount": postDTO.likeCount,
+        "commentCount": postDTO.commentCount,
+      };
+
+      var response = await _httpService.put("/posts/updatePost/$id", body);
       if (response?.status == 200 && response?.content != null) {
         return null;
       } else {

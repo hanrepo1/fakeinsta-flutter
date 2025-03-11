@@ -74,7 +74,7 @@ class UserService {
 
   Future<User?> getUserById(int id) async {
     if (_userCache.containsKey(id)) {
-      return _userCache[IdleScrollActivity]; // Return cached user if available
+      return _userCache[id];
     }
 
     try {
@@ -82,6 +82,7 @@ class UserService {
       if (response?.status == 200 && response?.content != null) {
         User user = User.fromJson(response!.content);
         _userCache[id] = user;
+        log(user.username);
         return user;
       }
     } catch (e) {
