@@ -1,18 +1,79 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:insta_flutter/model/post_model.dart';
 
+import '../dto/post_DTO.dart';
+import '../model/user_model.dart';
+import '../services/post_service.dart';
+
 class PostViewModel extends ChangeNotifier {
+  final PostService _postService = PostService(); // Create an instance of PostService
   List<Post> _posts = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   List<Post> get posts => _posts;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
-  void fetchPosts() {
-    // Simulate fetching data from an API
-    _posts = [
-      Post(id: 1, profilePicture: 'http://gambar', username: 'user1', imageUrl: 'https://www.google.com', caption: 'First Post!', likeCount: 0, commentCount: 0),
-      Post(id: 2, profilePicture: 'http://gambar', username: 'user2', imageUrl: 'https://www.google.com', caption: 'Hello World!', likeCount: 0, commentCount: 0),
-      // Add more posts as needed
-    ];
+  Future<void> fetchPosts() async {
+    _isLoading = true;
+
+    try {
+      List<Post>? fetchedPosts = await _postService.getAllPosts();
+      if (fetchedPosts != null) {
+        _posts = fetchedPosts;
+      } else {
+        _errorMessage = "Failed to fetch posts.";
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createPost(int userId, String imageUrl, String caption, int likeCount, int commentCount, File image) async {
+    _isLoading = true;
     notifyListeners();
+
+    PostDTO postDTO = PostDTO(userId: userId, imageUrl: "", caption: caption, likeCount: likeCount, commentCount: commentCount);
+
+    try {
+      String? result = await _postService.createPost(postDTO, image);
+      if (result == null) {
+        await fetchPosts();
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+    return false;
+  }
+
+  Future<String?> updatePost(int id) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      String? result = await _postService.updatePost(id);
+      if (result == null) {
+        await fetchPosts();
+      }
+      return result;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return _errorMessage;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

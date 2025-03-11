@@ -1,21 +1,21 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:insta_flutter/main_page.dart';
-import 'package:insta_flutter/ui/home_page.dart';
+import 'package:insta_flutter/ui/login_page.dart';
+import 'package:insta_flutter/viewmodel/user_view_model.dart';
 import 'package:provider/provider.dart';
 
-import '../constants/shared_pref.dart';
-import '../viewmodel/auth_view_model.dart';
-import 'register_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final userController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   Icon passwordIcon = const Icon(Icons.visibility_off);
 
@@ -27,9 +27,19 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: Center(
-        child: Consumer<AuthViewModel>(
-          builder: (context, authViewModel, child) {
+        child: Consumer<UserViewModel>(
+          builder: (context, userViewModel, child) {
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -42,7 +52,20 @@ class _LoginPageState extends State<LoginPage> {
                     TextField(
                       controller: userController,
                       decoration: InputDecoration(
-                        hintText: 'Phone number, email or username',
+                        hintText: 'Username',
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        hintText: 'Email',
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
@@ -87,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       child: const Center(
                         child: Text(
-                          'Log In',
+                          'Register',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -95,32 +118,23 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       onPressed: () async {
-                        bool success = await authViewModel.login(
+                        log(userController.text+" "+emailController.text+" "+passwordController.text);
+                        bool success = await userViewModel.register(
                           userController.text,
+                          emailController.text,
                           passwordController.text,
                         );
                         if (success) {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => MainPage()),
+                            MaterialPageRoute(builder: (context) => LoginPage()),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(authViewModel.errorMessage!),
-                              backgroundColor: Colors.red,
-                            ),
+                            SnackBar(content: Text(userViewModel.errorMessage!)),
                           );
                         }
                       },
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Forgot your login details? Get help logging in.',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
                     ),
                     const SizedBox(height: 20),
                     const Row(
@@ -156,35 +170,6 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.blue,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Don't have an account?", 
-                          style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                          ),
-                        ),
-                        TextButton(
-                          child: const Text(
-                            "Sign Up!",
-                            style: TextStyle(
-                              color: Colors.blue,
-                              fontSize: 14,
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => RegisterPage()),
-                            );
-                          },
-                        ),
-                      ],
                     ),
                   ],
                 ),

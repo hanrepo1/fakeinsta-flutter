@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'constants/shared_pref.dart';
 import 'ui/footer_tab.dart';
 import 'ui/home_page.dart';
 import 'ui/search_page.dart';
 import 'ui/add_post_page.dart';
 import 'ui/reels_page.dart';
 import 'ui/profile_page.dart';
-import 'viewmodel/post_view_model.dart';
 
 class MainPage extends StatefulWidget {
   @override
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
@@ -24,6 +23,25 @@ class _MainPageState extends State<MainPage> {
     ProfilePage(), 
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      SharedPref.removeAccessToken();
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -32,11 +50,13 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex], 
-      bottomNavigationBar: FooterTab(
-        selectedIndex: _selectedIndex,
-        onTabSelected: _onItemTapped,
+    return SafeArea(
+      child: Scaffold(
+        body: _pages[_selectedIndex], 
+        bottomNavigationBar: FooterTab(
+          selectedIndex: _selectedIndex,
+          onTabSelected: _onItemTapped,
+        ),
       ),
     );
   }

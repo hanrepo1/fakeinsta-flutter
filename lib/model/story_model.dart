@@ -3,4 +3,5 @@ class Story {
   final String username;
 
   Story({required this.imageUrl, required this.username});
+
 }

@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import 'package:insta_flutter/ui/add_post_next_page.dart';
 
 class AddPostPage extends StatefulWidget {
   const AddPostPage({super.key});
@@ -13,17 +17,6 @@ class AddPostPage extends StatefulWidget {
 class _AddPostPageState extends State<AddPostPage> {
   File? _selectedImage;
   List<File> _galleryImages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadGalleryImages();
-  }
-
-  Future<void> _loadGalleryImages() async {
-    // Load images from the gallery (this is a placeholder)
-    // You can implement your own logic to load images from the gallery
-  }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -39,7 +32,7 @@ class _AddPostPageState extends State<AddPostPage> {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Cropper',
-          toolbarColor: Colors.deepOrange,
+          toolbarColor: Colors.blue,
           toolbarWidgetColor: Colors.white,
           initAspectRatio: CropAspectRatioPreset.original,
           lockAspectRatio: true,
@@ -54,29 +47,28 @@ class _AddPostPageState extends State<AddPostPage> {
       setState(() {
         _selectedImage = File(croppedFile.path);
       });
+    } else {
+      log("Cropping failed or was canceled.");
     }
   }
 
-  // void _navigateToNextPage() {
-  //   if (_selectedImage != null) {
-  //     Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => NextPage(image: _selectedImage!),
-  //       ),
-  //     );
-  //   }
-  // }
+  void _navigateToNextPage() {
+    if (_selectedImage != null) {
+      log(_selectedImage!.uri.toFilePath());
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddPostNextPage(image: _selectedImage!),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Photo Cropper'),
-      ),
       body: Column(
         children: [
-          // Top half for the selected image
           Expanded(
             flex: 1,
             child: Column(
@@ -91,11 +83,10 @@ class _AddPostPageState extends State<AddPostPage> {
                       },
                     ),
                     Text('New Post', style: TextStyle(fontSize: 20)),
-                    // TextButton(
-                    //   onPressed: _navigateToNextPage,
-                    //   child: 
-                      Text('Next'),
-                    // ),
+                    TextButton(
+                      onPressed: _navigateToNextPage,
+                      child: Text('Next'),
+                    ),
                   ],
                 ),
                 Expanded(
@@ -106,7 +97,6 @@ class _AddPostPageState extends State<AddPostPage> {
               ],
             ),
           ),
-          // Bottom half for the gallery images
           Expanded(
             flex: 1,
             child: GridView.builder(
@@ -128,7 +118,6 @@ class _AddPostPageState extends State<AddPostPage> {
               },
             ),
           ),
-          // Button to pick an image from the gallery
           ElevatedButton(
             onPressed: _pickImage,
             child: Text('Pick Image from Gallery'),

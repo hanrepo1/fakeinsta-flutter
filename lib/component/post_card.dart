@@ -1,91 +1,156 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class PostCard extends StatelessWidget {
-  final bool isVisible;
-  final Function onClose;
-  final GestureTapCallback? onTapOutside;
+import '../interactions/like_button.dart';
+import '../model/post_model.dart';
+import '../model/user_model.dart';
+import '../viewmodel/user_view_model.dart';
+
+class PostCard extends StatefulWidget {
+  final Post post;
+  final int index;
+  final Function(int) toggleCommentVisibility;
 
   const PostCard({
-    super.key, 
-    required this.isVisible, 
-    required this.onClose, 
-    this.onTapOutside
-  });
+    Key? key,
+    required this.post,
+    required this.index,
+    required this.toggleCommentVisibility,
+  }) : super(key: key);
+
+  @override
+  _PostCardState createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  User? user;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final userViewModel = Provider.of<UserViewModel>(context, listen: false);
+    user = await userViewModel.getUserById(widget.post.userId);
+    setState(() {
+      isLoading = false;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return Visibility(
-      visible: isVisible,
-      child: GestureDetector(
-        onTap: onTapOutside,
-        child: Container(
-          alignment: Alignment.bottomCenter,
-          color: Colors.black54,
-          child: AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.7,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+    return Card(
+      margin: const EdgeInsets.all(12.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: isLoading
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 8.0),
+                      Text("Loading...", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  )
+                : _buildUserRow(user?.username ?? "Unknown", user?.profilePicture),
+          ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: double.infinity,
+                height: 400,
+                child: Image.network(
+                  widget.post.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(child: CircularProgressIndicator());
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: Center(
+                        child: IconButton(
+                          icon: Icon(Icons.refresh, size: 50.0),
+                          onPressed: () {
+                            // Retry logic here
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
               ),
-              child: Column(
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(top: 8.0),
-                    height: 5.0,
-                    width: 40.0,
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const SizedBox(width: 45),
-                        const Text(
-                          'Comments',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => onClose(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: 5,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text('Comment $index'),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+            ],
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              LikeButton(post: widget.post),
+              IconButton(
+                padding: const EdgeInsets.all(0),
+                icon: const Icon(Icons.comment),
+                onPressed: () => widget.toggleCommentVisibility(widget.index),
               ),
+              Text(
+                widget.post.commentCount.toString(),
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.send),
+              const Spacer(),
+              const Icon(Icons.bookmark_border),
+              const SizedBox(width: 12),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              widget.post.caption.length > 100 ? '${widget.post.caption.substring(0, 100)}...' : widget.post.caption,
+              maxLines: widget.post.caption.length > 100 ? 1 : null,
+              overflow: widget.post.caption.length > 100 ? TextOverflow.ellipsis : null,
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+
+  Row _buildUserRow(String username, String? profilePicture) {
+    return Row(
+      children: [
+        ClipOval(
+          child: Image.network(
+            profilePicture ?? 'assets/images/avatar1.jpg',
+            width: 40.0,
+            height: 40.0,
+            fit: BoxFit.cover,
+            errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+              return Image.asset(
+                'assets/images/avatar1.jpg',
+                width: 40.0,
+                height: 40.0,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
+        ),
+        SizedBox(width: 8.0),
+        Text(
+          username,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 }
